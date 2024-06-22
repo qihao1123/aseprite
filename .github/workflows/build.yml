@@ -1,63 +1,63 @@
-名字: 建设
-在: [推,拉取请求]
-工作:
-建设:
-连续运行: ${{matrix.os}}
-战略:
-快速失效: 错误的
-矩阵:
-操作系统（Operating System）: [windows-最新]
-构建类型: [释放；排放；发布]
-启用_用户界面: [在]
-包括:
-          - 操作系统（Operating System）: windows-最新
-构建类型: 释放；排放；发布
-启用_用户界面: 在
-步伐:
-    - 使用: 动作/签出@v3
-随着:
-子模块: “递归”
-    - 名字: ccache
-使用: hendrikmuhs/ccache-action@v1
-如果: runner.os ==' Linux '
-随着:
-键: ${{matrix.os}}-${{matrix.enable_ui}}
-    - 使用: seanmiddleditch/gha-setup-ninja @ master
-    - 使用: ilammy/msvc-dev-cmd@v1
-如果: runner.os =='视窗'
-    - 名字: 安装依赖项
-壳: 尝试
-奔跑: |
-if[[" $ { { runner . OS } } " = = " Linux "]]；然后
-sudo apt-get更新-qq
-sudo apt-get install -y \
-libx 11-dev libxcursor-dev libxi-dev
-船方不负担装货费用
-    - 名字: 生成生成文件
-壳: 尝试
-奔跑: |
-if[[" $ { { runner . OS } } " = = " Windows "]]；然后
-导出enable_ccache=off
-其他
-导出enable_ccache=on
-船方不负担装货费用
-curl-L https://github . com/blue loveth/a script/releases/download/v 0.01/skia . zip-output skia . zip
-7z x skia.zip
-cmake -S . -B build -G忍者\
--DC make _ BUILD _ TYPE = $ { { matrix . BUILD _ TYPE } } \
--den able _ UI = $ { { matrix . enable _ UI } } \
--den able _ CCACHE = $ enable _ CCACHE \
--DLAF后端=斯基亚\
--DSKIA_DIR=。/skia \
--DSKIA_LIBRARY_DIR=。/skia/out/Release-x64 \
--DSKIA_LIBRARY=。/skia/out/Release-x64/skia.lib
-    - 名字: 收集
-壳: 尝试
-奔跑: |
-cd版本&忍者
-    - 使用: 动作/上传-工件@v3
-随着:
-名字: 无菌晶体
-小路: |
-data脚本/a脚本/build/bin/data
-d:/a/a script/a script/build/bin/a script . exe
+name: build
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        build_type: [Release]
+        enable_ui: [on]
+        include:
+          - os: windows-latest
+            build_type: Release
+            enable_ui: on
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+      if: runner.os == 'Linux'
+      with:
+        key: ${{ matrix.os }}-${{ matrix.enable_ui }}
+    - uses: seanmiddleditch/gha-setup-ninja@master
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: runner.os == 'Windows'
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "Linux" ]] ; then
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libx11-dev libxcursor-dev libxi-dev
+        fi
+    - name: Generating Makefiles
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "Windows" ]] ; then
+          export enable_ccache=off
+        else
+          export enable_ccache=on
+        fi
+        curl -L https://github.com/blueloveTH/aseprite/releases/download/v0.01/skia.zip --output skia.zip
+        7z x skia.zip
+        cmake -S . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DENABLE_UI=${{ matrix.enable_ui }} \
+          -DENABLE_CCACHE=$enable_ccache \
+          -DLAF_BACKEND=skia \
+          -DSKIA_DIR=./skia \
+          -DSKIA_LIBRARY_DIR=./skia/out/Release-x64 \
+          -DSKIA_LIBRARY=./skia/out/Release-x64/skia.lib
+    - name: Compiling
+      shell: bash
+      run: |
+        cd build && ninja
+    - uses: actions/upload-artifact@v3
+      with:
+        name: aseprite
+        path: |
+          D:/a/aseprite/aseprite/build/bin/data
+          D:/a/aseprite/aseprite/build/bin/aseprite.exe
